@@ -11,12 +11,14 @@ with a coach that refuses to hand you the answer.
 
 **Status: specification complete, implementation not started.**
 
+The name is provisional. It lives only in `lib/brand.ts` (D41), so changing it is one line.
+
 ## Read these first
 
 | File | What it is |
 |------|-----------|
-| [`REQUIREMENTS.md`](REQUIREMENTS.md) | Living source of truth. Numbered, dated decisions (D1–D40). |
-| [`BACKLOG.md`](BACKLOG.md) | 83 tickets across 14 epics, with a dependency map and milestones. |
+| [`REQUIREMENTS.md`](REQUIREMENTS.md) | Living source of truth. Numbered, dated decisions (D1–D44). |
+| [`BACKLOG.md`](BACKLOG.md) | 84 tickets across 14 epics, with a dependency map and milestones. |
 | [`QUESTIONS.md`](QUESTIONS.md) | Open items that are deliberately not decided yet. |
 | [`CLAUDE.md`](CLAUDE.md) | Session ritual and the invariants that must not be broken. |
 

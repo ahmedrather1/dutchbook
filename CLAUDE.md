@@ -61,6 +61,19 @@ needs the foundational knowledge first. It is also a public, publishable product
 - **The Socratic coach never hands over the answer (D23/D24).** Its refusal behaviour is a
   tested feature with a golden set that must pass 100% on the answer-seeking half.
 
+## Simplicity bar (D42–D44)
+
+- **Build the smallest thing that meets the acceptance criteria.** No speculative
+  abstraction, no config for one caller, no layer added "for later". A plain function
+  beats a class; a plain object beats a factory. Delete rather than comment out.
+- **Comments explain *why*, never *what*.** Code needing a paragraph gets rewritten.
+  Three things earn a comment: a venue fact with its source URL (D14), a non-obvious
+  invariant, a deliberate tradeoff.
+- **Be terse in chat too.** State what changed and what the owner needs to know. No
+  preamble, no restating the diff, no summarising work they just watched happen.
+- **The product name is not hardcoded** (D41) — it comes from `lib/brand.ts`. Never type
+  it into a component, metadata field, or piece of copy.
+
 ## Teaching quality bar
 
 This is a learning product for a stated beginner (D2). Two rules that are easy to forget:

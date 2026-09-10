@@ -10,7 +10,7 @@ code or chat.
   writing and running prediction-market arbitrage strategies.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
 - Open, undecided items live in `QUESTIONS.md`. Do not silently resolve them.
-- Last updated: 2026-09-10 (initial requirements capture, D1–D40).
+- Last updated: 2026-09-10 (initial capture D1–D40; added working standards D41–D44).
 
 ---
 
@@ -37,7 +37,7 @@ this?" Content that is interesting-but-inapplicable is out of scope.
 | D4 | **Size = 12 chapters, ~6–10 hours of content.** A real course-sized product. | Owner chose "substantial" knowingly. |
 | D5 | **Shape of a chapter = concept → drills → live simulation "boss level".** Short taught concept, then fast repetition drills, then a timed simulated market with a ticking clock and a live order book you trade against. | Owner chose "live sim + quizzes between levels"; drills sit between the two to build fluency before pressure. |
 | D6 | **Public product, desktop-first. Mobile is explicitly out of scope for v1.** The UI must not be built in a way that makes responsive impossible later, but no ticket carries mobile acceptance criteria. | Dense order books need screen area; owner accepted the tradeoff. |
-| D7 | **Provisional product name = "Dutch Book"**, repo `dutchbook`. A Dutch book is the canonical name for the arbitrage the game teaches. Not locked — see `QUESTIONS.md` Q1. | On-theme, memorable; renaming later is cheap if done before launch. |
+| D7 | **Product name = "Dutch Book"**, repo `dutchbook`. Used everywhere for now; **the name is not locked** and D41 keeps changing it cheap. | On-theme and memorable, but a beginner-facing landing page may want plainer words (Q1). |
 
 ## 2. Curriculum (locked 2026-09-10)
 
@@ -142,6 +142,7 @@ app/
   guide/                   the interactive repo/architecture study guide (D40)
   api/                     phase 2 only: coach proxy, live-feed proxy
 lib/
+  brand.ts                 the ONLY place the product name appears (D41)
   engine/                  deterministic simulation: book, matching, clock, PRNG, P&L
   venues/                  Polymarket and Kalshi models: fees, ticks, settlement
   feed/                    MarketFeed adapters: synthetic, replay, (phase 2) live
@@ -154,9 +155,18 @@ fixtures/                  captured historical replay data (static JSON)
 tests/e2e/                 Playwright specs
 ```
 
+## 8. Working standards (locked 2026-09-10)
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| D41 | **The product name lives in exactly one place** — `lib/brand.ts`, exporting `PRODUCT_NAME`, `PRODUCT_TAGLINE`, and `SITE_URL`. Nothing else hardcodes the name: not components, not metadata, not the manifest, not content prose. A lint rule bans the literal string outside that file. Renaming is a one-line change plus the repo directory. | The name is unlocked (D7/Q1). Making the change cheap is what lets it stay unlocked. |
+| D42 | **Simplicity is a requirement, not a preference.** Build the smallest thing that meets the acceptance criteria. No speculative abstraction, no config for one caller, no layer added "for later". Prefer a plain function to a class, a plain object to a factory. Delete rather than comment out. | The value of this repo is the engine's correctness and the content's clarity. Ceremony hides both. |
+| D43 | **Comments explain *why*, never *what*.** Code that needs a paragraph should be rewritten instead. The exceptions that earn a comment: a venue fact (with its source URL — D14), a non-obvious invariant, and a deliberate tradeoff. | A reader should follow the code by reading the code. |
+| D44 | **Docs are terse.** Ticket updates, PR bodies, and `docs/` entries state what changed and what to know — no restating the diff, no preamble. | Same reason; the spec files are already long enough. |
+
 ---
 
-## 8. Explicit non-goals for v1
+## 9. Explicit non-goals for v1
 
 - Real-money trading of any kind, or any code path that could place a real order.
 - Mobile/responsive layouts (D6).

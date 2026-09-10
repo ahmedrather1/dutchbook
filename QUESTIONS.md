@@ -5,7 +5,7 @@ record the answer in `REQUIREMENTS.md` with a new D-number and date.
 
 | # | Question | Why it matters | Blocks |
 |---|----------|----------------|--------|
-| Q1 | Is "Dutch Book" the final product name? | It is a real term of art for the arb the game teaches, but it is also jargon a total beginner will not recognise on a landing page. Renaming is cheap now, annoying after launch. | L-1, L-2 |
+| Q1 | Is "Dutch Book" the final product name? **Using it for now** (D7). | A real term of art for the arb the game teaches, but jargon a total beginner will not recognise on a landing page. Deliberately left open — D41 keeps the name in `lib/brand.ts` alone so changing it stays a one-line edit. | L-1, L-2 |
 | Q2 | Custom domain, or the default Vercel URL? | Affects launch and OG card setup. | A-5, L-2 |
 | Q3 | What licence? Is the repo public? | The content is the valuable part; an MIT repo means anyone can reskin the curriculum. Code-vs-content dual licensing is an option. | L-4 |
 | Q4 | Analytics: none, self-hosted privacy-preserving, or hosted? | Needed to know whether the game actually teaches (where players fail and quit) — traded against a no-tracking stance for a public product. Must never capture the BYOK key or player code (D26). | L-3 |

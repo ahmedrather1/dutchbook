@@ -23,6 +23,8 @@
 - **Persistence:** no accounts (D29); `ProgressStore` interface + localStorage (D30); versioned/migratable saves (D31); JSON export/import (D32).
 - **Stack:** Next.js 15 App Router + TS strict + Tailwind on Vercel (D33); content as typed TS modules (D34); no `any` in engine/content (D35); Vitest + RTL + Playwright (D36); **tests are part of every ticket** (D37); **approve-each-library** (D38).
 - **A11y:** keyboard-operable, visible focus, semantic markup, **never colour alone** (D39).
+- **Name is unlocked:** it lives only in `lib/brand.ts`; nothing else hardcodes it (D41).
+- **Simplicity is a requirement:** smallest thing that meets the criteria, no speculative abstraction (D42). Comments say *why*, never *what* (D43). Docs are terse (D44).
 - **Ships an interactive study guide about itself at `/guide`** (D40).
 
 ---
@@ -39,6 +41,8 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 - **No new dependency** was added without recorded owner approval (D38) — if the ticket needs one, stop and propose it.
 - **Requirements updated:** if the ticket surfaced a new decision, it is recorded in `REQUIREMENTS.md` with a new D-number and date, and the mirror above is updated.
 - **Venue facts cited:** any real-world venue parameter introduced carries a source link and a checked-on date in a code comment (D14).
+- **Simplicity (D42–D43):** no abstraction without a second caller, no config for one call site, no dead or commented-out code. Comments explain *why*; anything needing a paragraph gets rewritten instead.
+- **Brand (D41):** the product name appears only via `lib/brand.ts`.
 
 ---
 
@@ -69,6 +73,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 | A-3 Playwright | A-1 | scaffold exists |
 | A-4 lint + CI | A-2 | tests runnable |
 | A-5 Vercel deploy | A-1 | scaffold exists |
+| A-8 brand constants | A-1 | scaffold exists |
 | A-6 money primitives | A-2 | can test |
 | A-7 seeded PRNG | A-2 | can test |
 | B-1 order book | A-6, A-7 | ticks + PRNG exist |
@@ -187,6 +192,16 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 ### A-7 — Seeded PRNG
 **Blocked by:** A-2
 **Acceptance criteria:** A small, documented, well-distributed PRNG (e.g. mulberry32/xoshiro) with an explicit seed; helpers for uniform int, uniform float, normal-ish draw, and weighted choice; **no use of `Math.random` anywhere in `lib/`** enforced by a lint rule; unit tests assert identical sequences for identical seeds and that independent streams do not correlate.
+
+### A-8 — Brand constants
+**Blocked by:** A-1
+**Goal:** Make renaming the product a one-line change (D41).
+**Acceptance criteria:**
+- `lib/brand.ts` exports `PRODUCT_NAME`, `PRODUCT_TAGLINE`, `SITE_URL`.
+- Every page title, metadata field, manifest entry, and piece of UI copy reads from it.
+- Lint rule fails on the literal product name anywhere outside `lib/brand.ts` and the spec markdown files.
+- Test: changing `PRODUCT_NAME` and rebuilding surfaces the new name everywhere; nothing greps back to the old one.
+**Non-goals:** Logo, domain (Q2), final name (Q1).
 
 ---
 
@@ -569,7 +584,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ### L-1 — Landing page
 **Blocked by:** E-1, M2 complete
-**Acceptance criteria:** A public page stating what the game teaches, who it is for, and what you can do afterward; shows the 12-chapter arc; a live non-interactive demo of a ticking order book as the hero; "Start Chapter 1" is the primary action with no signup; SSR-rendered for SEO (D33).
+**Acceptance criteria:** All copy reads from `lib/brand.ts` (A-8). A public page stating what the game teaches, who it is for, and what you can do afterward; shows the 12-chapter arc; a live non-interactive demo of a ticking order book as the hero; "Start Chapter 1" is the primary action with no signup; SSR-rendered for SEO (D33).
 
 ### L-2 — SEO, metadata, and social cards
 **Blocked by:** L-1

@@ -151,6 +151,52 @@ export class Matcher {
   }
 }
 
+export interface FillEstimate {
+  filledQty: number;
+  notional: Cents;
+  averagePrice: Ticks | undefined;
+  /** The first price you would touch — the quote on screen. */
+  bestPrice: Ticks | undefined;
+  /** The worst price you would touch. */
+  worstPrice: Ticks | undefined;
+  /** How much worse your average is than the quote. This is the slippage. */
+  slippage: number;
+  /** Size you asked for that the book cannot supply. */
+  shortfall: number;
+}
+
+/** What a market order would do, without doing it. Drives the pre-trade preview (E-4). */
+export function estimateFill(book: OrderBook, side: Side, qty: number): FillEstimate {
+  const makerSide: Side = side === "buy" ? "sell" : "buy";
+  let remaining = qty;
+  let paid = 0;
+  let best: Ticks | undefined;
+  let worst: Ticks | undefined;
+
+  for (const maker of book.queue(makerSide)) {
+    if (remaining === 0) break;
+    const take = Math.min(remaining, maker.qty);
+    remaining -= take;
+    paid += take * maker.price;
+    best ??= maker.price;
+    worst = maker.price;
+  }
+
+  const filled = qty - remaining;
+  const average = filled === 0 ? undefined : (Math.round(paid / filled) as Ticks);
+  return {
+    filledQty: filled,
+    notional: paid as Cents,
+    averagePrice: average,
+    bestPrice: best,
+    worstPrice: worst,
+    // Buying, a worse average is higher; selling, it is lower.
+    slippage:
+      average === undefined || best === undefined ? 0 : Math.abs(average - best),
+    shortfall: remaining,
+  };
+}
+
 /** Average fill price, in ticks. Undefined when nothing filled. */
 export function averagePrice(r: MatchResult): Ticks | undefined {
   return r.filledQty === 0 ? undefined : ticks(Math.round(r.notional / r.filledQty));

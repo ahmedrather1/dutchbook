@@ -1,4 +1,4 @@
-import { flat, makeMarketMaker, makeNoiseTaker } from "@/lib/engine/agents";
+import { makeMarketMaker, makeNoiseTaker, wander } from "@/lib/engine/agents";
 import { cents, ticks, ONE_DOLLAR } from "@/lib/engine/money";
 import type { Scenario } from "@/lib/engine/sim";
 import { costOfTrade, priceToProbability, readTheBook } from "./generate";
@@ -13,15 +13,19 @@ const quietBook: Scenario = {
   durationTicks: 60,
   startingCash: cents(100 * ONE_DOLLAR),
   initialBook: [
-    { side: "buy", price: ticks(580), qty: 40 },
-    { side: "buy", price: ticks(570), qty: 80 },
-    { side: "sell", price: ticks(640), qty: 35 },
-    { side: "sell", price: ticks(650), qty: 90 },
+    { side: "buy", price: ticks(590), qty: 12 },
+    { side: "buy", price: ticks(580), qty: 25 },
+    { side: "buy", price: ticks(570), qty: 40 },
+    { side: "sell", price: ticks(630), qty: 14 },
+    { side: "sell", price: ticks(640), qty: 28 },
+    { side: "sell", price: ticks(650), qty: 45 },
   ],
-  fairValue: flat(610),
+  // Drifting, not flat: prices have to move or there is nothing to notice.
+  fairValue: wander(610, 6, 31),
   agents: () => [
-    makeMarketMaker({ id: "mm", halfSpread: 30, size: 40, refreshEvery: 10 }),
-    makeNoiseTaker({ id: "noise", frequency: 0.12, minSize: 1, maxSize: 5 }),
+    makeMarketMaker({ id: "mm", halfSpread: 20, size: 18, refreshEvery: 3 }),
+    makeMarketMaker({ id: "mm2", halfSpread: 40, size: 30, refreshEvery: 5 }),
+    makeNoiseTaker({ id: "noise", frequency: 0.55, minSize: 2, maxSize: 12 }),
   ],
 };
 
@@ -53,10 +57,17 @@ export const chapter1: Chapter = {
       title: "A market is two lists",
       objectives: ["read-bid-ask", "which-side"],
       defines: ["bid", "ask", "order book"],
+      points: [
+        "An order book is two lists: people waiting to buy, and people waiting to sell.",
+        "**Bid** = best price someone will buy at. **Ask** = best price someone will sell at.",
+        "There is no single price — there are two.",
+        "Buying now? You pay the ask. Selling now? You get the bid.",
+      ],
       body: [
-        "Every market is two lists of intentions. One list is people willing to buy, and the price each of them will pay. The other is people willing to sell, and the price each will accept. Together the two lists are called the order book.",
-        "The highest price anyone will buy at is the bid. The lowest price anyone will sell at is the ask. Those two numbers are the only prices you can actually trade at right now.",
-        "This has a consequence people find surprising at first: there is no single price. If you want to buy immediately, you pay the ask. If you want to sell immediately, you receive the bid. You trade against the opposite side from the one you are on.",
+        "Forget charts for a minute. A market is really just two lists of people waiting.",
+        "On one side, people who want to buy, each with a price they're willing to pay. On the other, people who want to sell, each with a price they'll accept. Put the two lists side by side and you've got an order book. That's the panel on your right.",
+        "The best offer to buy is called the bid. The best offer to sell is called the ask. Those are the only two prices you can actually trade at right now — everything else is someone hoping.",
+        "Here's the part that trips people up: there isn't one price. There are two, and which one you get depends on what you want. Buying right now? You pay the ask. Selling right now? You get the bid. You always trade against the other side.",
       ],
     },
     {
@@ -64,10 +75,16 @@ export const chapter1: Chapter = {
       title: "The gap between them is a cost",
       objectives: ["read-spread"],
       defines: ["spread"],
+      points: [
+        "**Spread** = the gap between the bid and the ask.",
+        "Buy and instantly sell back, and you lose the spread for doing nothing.",
+        "It is not a fee. It is what impatience costs.",
+        "Wide spread = expensive to trade in and out. It says nothing about which way the event resolves.",
+      ],
       body: [
-        "The bid is always below the ask. The gap between them is the spread.",
-        "The spread matters because of what happens if you buy and immediately sell again. You paid the ask, you received the bid, and you are down by the spread having done nothing at all.",
-        "That is not a fee anyone charged you. It is the price of wanting to trade right now instead of waiting. Later chapters count it as a real cost, because it is one.",
+        "The bid always sits below the ask. That gap has a name: the spread.",
+        "Want to see why it matters? Buy something and sell it back one second later. You paid the ask, you got back the bid, and you're down — for doing absolutely nothing.",
+        "Nobody charged you a fee. That's just what it costs to be impatient. Waiting is free; trading right now isn't. We'll come back to this in Chapter 5 and put a number on it, because it's one of the main reasons a trade that looks profitable on paper isn't.",
       ],
     },
     {
@@ -75,10 +92,16 @@ export const chapter1: Chapter = {
       title: "A price is only good for so much size",
       objectives: ["read-depth"],
       defines: ["depth", "size"],
+      points: [
+        "**Depth** = how many contracts are available at a given price.",
+        "A price is a promise about a specific size, not any size.",
+        "Want more than is on offer? The rest fills at worse prices.",
+        "An edge that exists for 10 contracts but not 10,000 is a different edge.",
+      ],
       body: [
-        "Next to each price is a quantity: how many contracts are available there. This is called depth.",
-        "The best ask might be $0.64 for 35 contracts. If you want 100, you get 35 at $0.64 and the rest at worse prices further up the book.",
-        "So a price you see on screen is a promise about a specific amount, not about any amount. An opportunity that exists for 10 contracts and not for 10,000 is a completely different opportunity.",
+        "Look next to each price and you'll see a number. That's how many contracts are actually available there. Traders call it depth.",
+        "Say the best ask is $0.64, and there are 35 contracts at that price. You want 100. You'll get 35 of them at $0.64 — and then the price you pay gets worse, because you have to reach further up the book for the rest.",
+        "So the price on screen isn't a promise about any amount you like. It's a promise about a specific amount. Keep that in mind: an opportunity that's there for 10 contracts and gone by 10,000 is a completely different opportunity, and later on it's the difference between a strategy that works and one that only looked like it would.",
       ],
     },
     {
@@ -86,10 +109,17 @@ export const chapter1: Chapter = {
       title: "The price is the probability",
       objectives: ["price-is-probability"],
       defines: ["binary contract", "settle"],
+      points: [
+        "A **binary contract** pays $1.00 if the event happens, $0.00 if it does not.",
+        "So its price is what the crowd thinks it is worth — between $0 and $1.",
+        "$0.62 means the market thinks **62% likely**.",
+        "Price and probability are the same number. One just has a dollar sign on it.",
+      ],
       body: [
-        "In a prediction market, a contract pays exactly $1.00 if some event happens, and exactly $0.00 if it does not. That is called a binary contract, and paying out is called settling.",
-        "So ask what a contract trading at $0.62 is worth. If you think the event is certain, it is worth $1.00 and $0.62 is cheap. If you think it will never happen, it is worth nothing and $0.62 is madness.",
-        "The price where buyers and sellers stop disagreeing is the market's collective estimate of how likely the event is. $0.62 means the market thinks 62%. The price and the probability are the same number.",
+        "Here's where prediction markets get interesting. A contract pays exactly $1.00 if the thing happens, and exactly $0.00 if it doesn't. Nothing in between. That's a binary contract, and the moment it pays out is called settling.",
+        "Now think about what one should cost. Suppose it's trading at $0.62. If you're certain the event happens, that contract is worth a dollar to you and $0.62 is a bargain. If you're certain it won't, it's worth nothing and $0.62 is madness.",
+        "Somewhere between those two people, a price gets agreed. And that price is the market's best guess at how likely the thing actually is. $0.62 means the crowd thinks 62%.",
+        "That's the whole idea, and it's worth sitting with: the price and the probability are the same number. One just has a dollar sign in front of it.",
       ],
     },
   ],
@@ -142,7 +172,7 @@ export const chapter1: Chapter = {
       id: "read-only",
       scenario: quietBook,
       brief:
-        "A slow market. Nothing is being asked of you except to watch. Find the best bid, the best ask, and the spread, and notice how they move as trades come through.",
+        "Press Start and just watch for a bit. Find the best bid and the best ask — they're the two prices closest to the middle. Notice the spread between them widen and tighten as people trade.",
       objectives: ["read-bid-ask", "read-spread", "read-depth"],
       success: [{ kind: "answer", questionId: "read-only-check", label: "Read the book correctly" }],
     },
@@ -150,7 +180,7 @@ export const chapter1: Chapter = {
       id: "first-trade",
       scenario: firstTrade,
       brief:
-        "Now buy 10 contracts. Before you do, predict which price you will get. Then check what you actually paid.",
+        "Your turn. Before you touch anything, look at the ask and work out what 10 contracts should cost you. Then buy 10 and see if you were right.",
       objectives: ["which-side", "read-depth"],
       success: [{ kind: "min-position", qty: 10, label: "Buy at least 10 contracts" }],
     },

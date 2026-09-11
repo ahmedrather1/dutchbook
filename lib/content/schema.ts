@@ -15,6 +15,8 @@ export interface Lesson {
   title: string;
   /** Short paragraphs. Prose exists to set up interaction, not to be read at length (D1). */
   body: string[];
+  /** The same idea as bullets. Shown alongside the prose for scanning. */
+  points: string[];
   /** Terms this lesson introduces; the content lint checks nothing is used before this. */
   defines?: string[];
   objectives: string[];

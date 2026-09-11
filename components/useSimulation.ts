@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Clock } from "@/lib/engine/clock";
 import { OrderBook } from "@/lib/engine/book";
-import { Matcher } from "@/lib/engine/match";
+import { estimateFill, Matcher } from "@/lib/engine/match";
 import { Portfolio } from "@/lib/engine/portfolio";
 import { makeRng } from "@/lib/engine/rng";
 import { PLAYER, type Scenario } from "@/lib/engine/sim";
-import type { MatchEvent } from "@/lib/engine/match";
+import type { FillEstimate, MatchEvent } from "@/lib/engine/match";
+import type { Side } from "@/lib/engine/book";
+import { toTrades, type Trade } from "./Tape";
 
 interface World {
   book: OrderBook;
@@ -27,6 +29,9 @@ export interface SimState {
   cash: number;
   realised: number;
   running: boolean;
+  trades: Trade[];
+  /** Ticks remaining before the scenario ends. */
+  remaining: number;
 }
 
 /**
@@ -50,7 +55,8 @@ export function useSimulation(scenario: Scenario) {
     };
   }, [scenario]);
 
-  const [state, setState] = useState<SimState>(() => snapshot(world, false));
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [state, setState] = useState<SimState>(() => snapshot(world, scenario, false, []));
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
@@ -60,6 +66,7 @@ export function useSimulation(scenario: Scenario) {
     let stopped = false;
 
     const step = (now: number) => {
+      const newTrades: Trade[] = [];
       const before = world.clock.tick;
       world.clock.advanceByWallMs(now - last);
       last = now;
@@ -70,10 +77,11 @@ export function useSimulation(scenario: Scenario) {
           setRunning(false);
           break;
         }
-        advanceOneTick(world, scenario, t);
+        newTrades.unshift(...advanceOneTick(world, scenario, t));
       }
 
-      setState(snapshot(world, !stopped));
+      if (newTrades.length > 0) setTrades((prev) => [...newTrades, ...prev].slice(0, 60));
+      setState(snapshot(world, scenario, !stopped, newTrades));
       if (!stopped) frame = requestAnimationFrame(step);
     };
 
@@ -84,22 +92,33 @@ export function useSimulation(scenario: Scenario) {
     };
   }, [running, world, scenario]);
 
-  const buy = (qty: number) => {
+  const trade = (side: Side, qty: number) => {
     world.matcher.submit({
-      id: `${PLAYER}-${world.clock.tick}-${qty}`,
-      side: "buy",
+      id: `${PLAYER}-${world.clock.tick}-${side}-${qty}-${Math.trunc(world.portfolio.cash)}`,
+      side,
       type: "market",
       qty,
       owner: PLAYER,
     });
-    applyFills(world);
-    setState(snapshot(world, running));
+    const fills = toTrades(applyFills(world), world.clock.tick);
+    setTrades((prev) => [...fills, ...prev].slice(0, 60));
+    setState(snapshot(world, scenario, running, fills));
   };
 
-  return { state, running, start: () => setRunning(true), pause: () => setRunning(false), buy };
+  const estimate = (side: Side, qty: number): FillEstimate =>
+    estimateFill(world.book, side, qty);
+
+  return {
+    state: { ...state, trades },
+    running,
+    start: () => setRunning(true),
+    pause: () => setRunning(false),
+    trade,
+    estimate,
+  };
 }
 
-function advanceOneTick(world: World, scenario: Scenario, t: number) {
+function advanceOneTick(world: World, scenario: Scenario, t: number): Trade[] {
   const fairValue = scenario.fairValue(t);
   const ctx = {
     tick: t,
@@ -110,7 +129,9 @@ function advanceOneTick(world: World, scenario: Scenario, t: number) {
     recentFills: world.recentFills,
   };
   for (const agent of world.agents) agent.act(ctx);
-  world.recentFills = applyFills(world);
+  const fills = applyFills(world);
+  world.recentFills = fills;
+  return toTrades(fills, t);
 }
 
 /** Drains matcher events and books any of the player's fills into the portfolio. */
@@ -126,9 +147,16 @@ function applyFills(world: World): MatchEvent[] {
   return events.filter((e) => e.kind === "fill");
 }
 
-function snapshot(world: World, running: boolean): SimState {
+function snapshot(
+  world: World,
+  scenario: Scenario,
+  running: boolean,
+  trades: Trade[],
+): SimState {
   return {
     tick: world.clock.tick,
+    trades,
+    remaining: Math.max(0, scenario.durationTicks - world.clock.tick),
     bids: world.book.levels("buy"),
     asks: world.book.levels("sell"),
     position: world.portfolio.position,

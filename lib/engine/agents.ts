@@ -1,7 +1,7 @@
 import type { Side } from "./book";
 import type { MatchEvent, Matcher } from "./match";
 import { roundToTick, ticks, type Ticks, ONE_DOLLAR } from "./money";
-import type { Rng } from "./rng";
+import { makeRng, type Rng } from "./rng";
 
 /** What the market "really" thinks, in ticks. Scenarios script this to guarantee a lesson. */
 export type FairValuePath = (tick: number) => Ticks;
@@ -148,6 +148,21 @@ export function ramp(from: number, to: number, startTick: number, endTick: numbe
     const progress = (t - startTick) / (endTick - startTick);
     return ticks(Math.round(from + (to - from) * progress));
   };
+}
+
+/**
+ * A gentle random walk. Precomputed from a seed so the path is fixed for a scenario
+ * and the run still replays exactly (D18).
+ */
+export function wander(start: number, stepTicks: number, seed: number, length = 400): FairValuePath {
+  const rng = makeRng(seed);
+  const path: Ticks[] = [];
+  let p = start;
+  for (let i = 0; i <= length; i++) {
+    p = Math.max(50, Math.min(ONE_DOLLAR - 50, p + rng.int(-stepTicks, stepTicks)));
+    path.push(roundToTick(p, 10));
+  }
+  return (t) => path[Math.min(t, length)]!;
 }
 
 /** An instantaneous repricing at `atTick` — a news event (Ch 9). */

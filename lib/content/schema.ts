@@ -81,6 +81,11 @@ export type ScenarioGoal =
 export interface ChapterTest {
   /** Fraction of available points needed to pass. Per-chapter by design (D11). */
   passThreshold: number;
+  /**
+   * No single objective may fall below this, whatever the overall score. Without it a
+   * player can pass while being blank on one objective the next chapter depends on.
+   */
+  objectiveFloor?: number;
   drills: (Drill | DrillTemplate)[];
   scenarios?: ScenarioStep[];
 }

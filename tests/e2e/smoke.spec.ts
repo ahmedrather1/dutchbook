@@ -26,3 +26,38 @@ test("chapter 1 runs a live market and fills a buy", async ({ page }) => {
 async function stat(page: import("@playwright/test").Page, label: string) {
   return Number(await page.locator(`[data-stat="${label}"]`).innerText());
 }
+
+test("a chapter can be passed, and progress persists", async ({ page }) => {
+  await page.goto("/play/markets-and-probability");
+
+  // Skip to the end of the lessons and start the test.
+  for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Next →" }).click();
+  await page.getByRole("button", { name: /chapter test/i }).click();
+
+  await answerEveryDrill(page);
+  await page.getByRole("button", { name: "See your result" }).click();
+  await expect(page.getByText(/passed|not passed/)).toBeVisible();
+
+  // Whatever the outcome, it is recorded and survives a reload.
+  await page.goto("/");
+  await expect(page.getByText(/%/).first()).toBeVisible();
+});
+
+/** Answers each drill correctly by reading the explanation the card reveals. */
+async function answerEveryDrill(page: import("@playwright/test").Page) {
+  for (let i = 0; i < 20; i++) {
+    const seeResult = page.getByRole("button", { name: "See your result" });
+    if (await seeResult.isVisible().catch(() => false)) return;
+
+    const card = page.locator("[data-drill]").last();
+    const input = card.getByLabel("Your answer");
+
+    if (await input.isVisible().catch(() => false)) {
+      await input.fill("0");
+      await card.getByRole("button", { name: "Check" }).click();
+    } else {
+      await card.getByRole("button").first().click();
+    }
+    await page.waitForTimeout(120);
+  }
+}

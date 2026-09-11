@@ -5,15 +5,25 @@ import Link from "next/link";
 import { MarketPanel } from "@/components/MarketPanel";
 import { ChapterEnd } from "@/components/ChapterEnd";
 import { Button } from "@/components/Terminal";
+import { DrillSet } from "@/components/DrillSet";
+import { useProgress } from "@/components/useProgress";
 import { getChapter } from "@/lib/content/registry";
+import { chapterProgress } from "@/lib/progress/store";
+import { recordAttempt, type Scored } from "@/lib/learning/score";
 
 export function ChapterView({ slug }: { slug: string }) {
   const [lessonIndex, setLessonIndex] = useState(0);
   const [runId, setRunId] = useState(0);
+  const [attemptSeed, setAttemptSeed] = useState(1);
+  const [phase, setPhase] = useState<"lessons" | "drills">("lessons");
+  const { progress, update } = useProgress();
   const chapter = getChapter(slug)!;
   const step = chapter.scenarios[0]!;
   const lesson = chapter.lessons[lessonIndex]!;
   const isLast = lessonIndex === chapter.lessons.length - 1;
+  const record = chapterProgress(progress, chapter.slug);
+
+  const finishDrills = (scored: Scored) => update(recordAttempt(progress, chapter, scored));
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -31,6 +41,12 @@ export function ChapterView({ slug }: { slug: string }) {
         </div>
         <h1 className="text-3xl font-bold tracking-tight mt-1">{chapter.title}</h1>
         <p className="text-muted mt-1">{chapter.teaches}</p>
+        {record.attempts.length > 0 && (
+          <p className="font-mono text-xs text-muted mt-2 tabular-nums">
+            best {Math.round(record.bestScore * 100)}%
+            {record.passed && <span className="text-bid ml-2">✓ passed</span>}
+          </p>
+        )}
       </header>
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-8 items-start">
@@ -98,7 +114,42 @@ export function ChapterView({ slug }: { slug: string }) {
             </div>
           </div>
 
-          {isLast && <ChapterEnd number={chapter.number} />}
+          {isLast && phase === "lessons" && (
+            <div className="mt-10 border border-accent/40 rounded-md overflow-hidden">
+              <div className="px-4 py-2 text-[10px] uppercase tracking-wider text-accent bg-raised border-b border-rule">
+                Ready when you are
+              </div>
+              <div className="p-4">
+                <p className="text-[15px]">
+                  That is every lesson. The test is {chapter.test.drills.length} questions, and you
+                  need {Math.round(chapter.test.passThreshold * 100)}% to pass.
+                </p>
+                <div className="mt-4">
+                  <Button onClick={() => setPhase("drills")}>
+                    {record.passed ? "Take it again" : "Take the chapter test"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {phase === "drills" && (
+            <div className="mt-10">
+              <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent mb-3">
+                Chapter {chapter.number} test
+              </h2>
+              <DrillSet
+                key={attemptSeed}
+                chapter={chapter}
+                drills={chapter.test.drills}
+                seed={attemptSeed}
+                onFinished={finishDrills}
+                onRetry={() => setAttemptSeed((s) => s + 1)}
+              />
+            </div>
+          )}
+
+          {record.passed && phase === "drills" && <ChapterEnd number={chapter.number} />}
         </section>
 
         <aside>

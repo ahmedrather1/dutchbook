@@ -10,7 +10,7 @@ code or chat.
   writing and running prediction-market arbitrage strategies.
 - Read this file **and** `BACKLOG.md` at the start of every session before touching a ticket.
 - Open, undecided items live in `QUESTIONS.md`. Do not silently resolve them.
-- Last updated: 2026-09-10 (initial capture D1–D40; added working standards D41–D44).
+- Last updated: 2026-09-11 (D45: public repo, MIT. Prior: D41–D44 working standards; D1–D40 initial capture).
 
 ---
 
@@ -162,6 +162,7 @@ tests/e2e/                 Playwright specs
 | D41 | **The product name lives in exactly one place** — `lib/brand.ts`, exporting `PRODUCT_NAME`, `PRODUCT_TAGLINE`, and `SITE_URL`. Nothing else hardcodes the name: not components, not metadata, not the manifest, not content prose. A lint rule bans the literal string outside that file. Renaming is a one-line change plus the repo directory. | The name is unlocked (D7/Q1). Making the change cheap is what lets it stay unlocked. |
 | D42 | **Simplicity is a requirement, not a preference.** Build the smallest thing that meets the acceptance criteria. No speculative abstraction, no config for one caller, no layer added "for later". Prefer a plain function to a class, a plain object to a factory. Delete rather than comment out. | The value of this repo is the engine's correctness and the content's clarity. Ceremony hides both. |
 | D43 | **Comments explain *why*, never *what*.** Code that needs a paragraph should be rewritten instead. The exceptions that earn a comment: a venue fact (with its source URL — D14), a non-obvious invariant, and a deliberate tradeoff. | A reader should follow the code by reading the code. |
+| D45 | **The repo is public on GitHub under the MIT licence** (resolves Q3, 2026-09-11). The curriculum is licensed on the same terms as the code. | Owner's choice, made knowingly: MIT permits anyone to reuse or reskin the teaching material as well as the engine. |
 | D44 | **Docs are terse.** Ticket updates, PR bodies, and `docs/` entries state what changed and what to know — no restating the diff, no preamble. | Same reason; the spec files are already long enough. |
 
 ---

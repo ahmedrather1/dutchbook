@@ -23,6 +23,7 @@
 - **Persistence:** no accounts (D29); `ProgressStore` interface + localStorage (D30); versioned/migratable saves (D31); JSON export/import (D32).
 - **Stack:** Next.js 15 App Router + TS strict + Tailwind on Vercel (D33); content as typed TS modules (D34); no `any` in engine/content (D35); Vitest + RTL + Playwright (D36); **tests are part of every ticket** (D37); **approve-each-library** (D38).
 - **A11y:** keyboard-operable, visible focus, semantic markup, **never colour alone** (D39).
+- **Repo is public, MIT** (D45).
 - **Name is unlocked:** it lives only in `lib/brand.ts`; nothing else hardcodes it (D41).
 - **Simplicity is a requirement:** smallest thing that meets the criteria, no speculative abstraction (D42). Comments say *why*, never *what* (D43). Docs are terse (D44).
 - **Ships an interactive study guide about itself at `/guide`** (D40).

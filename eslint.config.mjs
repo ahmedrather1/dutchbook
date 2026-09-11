@@ -39,6 +39,10 @@ export default [
     },
   },
   {
+    files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.ts"],
+    rules: { "no-console": ["error", { allow: ["warn", "error"] }] },
+  },
+  {
     files: ["**/*.test.{ts,tsx}"],
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },

@@ -93,6 +93,7 @@ export function useSimulation(scenario: Scenario) {
   }, [running, world, scenario]);
 
   const trade = (side: Side, qty: number) => {
+    if (blockedReason(side, qty)) return;
     world.matcher.submit({
       id: `${PLAYER}-${world.clock.tick}-${side}-${qty}-${Math.trunc(world.portfolio.cash)}`,
       side,
@@ -108,6 +109,17 @@ export function useSimulation(scenario: Scenario) {
   const estimate = (side: Side, qty: number): FillEstimate =>
     estimateFill(world.book, side, qty);
 
+  /** Why this order cannot be sent, or undefined if it can. */
+  const blockedReason = (side: Side, qty: number): string | undefined => {
+    const preview = estimateFill(world.book, side, qty);
+    if (preview.filledQty === 0) return "Nobody is quoting the other side right now.";
+    if (state.remaining === 0) return "The market has closed.";
+    if (side === "buy" && preview.notional > world.portfolio.buyingPower) {
+      return "That costs more cash than you have.";
+    }
+    return undefined;
+  };
+
   return {
     state: { ...state, trades },
     running,
@@ -115,6 +127,7 @@ export function useSimulation(scenario: Scenario) {
     pause: () => setRunning(false),
     trade,
     estimate,
+    blockedReason,
   };
 }
 

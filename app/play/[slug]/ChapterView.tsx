@@ -1,28 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { OrderBook } from "@/components/OrderBook";
-import { OrderTicket } from "@/components/OrderTicket";
-import { Tape } from "@/components/Tape";
-import { Button, Stat } from "@/components/Terminal";
-import { useSimulation } from "@/components/useSimulation";
-import { formatCents } from "@/lib/engine/money";
-import type { Cents } from "@/lib/engine/money";
+import Link from "next/link";
+import { MarketPanel } from "@/components/MarketPanel";
+import { ChapterEnd } from "@/components/ChapterEnd";
+import { Button } from "@/components/Terminal";
 import { getChapter } from "@/lib/content/registry";
 
 export function ChapterView({ slug }: { slug: string }) {
   const [lessonIndex, setLessonIndex] = useState(0);
+  const [runId, setRunId] = useState(0);
   const chapter = getChapter(slug)!;
   const step = chapter.scenarios[0]!;
-  const sim = useSimulation(step.scenario);
   const lesson = chapter.lessons[lessonIndex]!;
   const isLast = lessonIndex === chapter.lessons.length - 1;
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="border-b border-rule pb-4">
-        <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-          Chapter {chapter.number}
+        <div className="flex items-baseline gap-3">
+          <Link
+            href="/"
+            className="font-mono text-[11px] text-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            ← All chapters
+          </Link>
+          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
+            Chapter {chapter.number}
+          </span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight mt-1">{chapter.title}</h1>
         <p className="text-muted mt-1">{chapter.teaches}</p>
@@ -92,35 +97,16 @@ export function ChapterView({ slug }: { slug: string }) {
               </ul>
             </div>
           </div>
+
+          {isLast && <ChapterEnd number={chapter.number} />}
         </section>
 
         <aside>
-          <OrderBook bids={sim.state.bids} asks={sim.state.asks} teaching />
-
-          <div className="grid grid-cols-4 border border-t-0 border-rule text-sm">
-            <Stat label="Tick" value={String(sim.state.tick)} hint="Time in the simulation." />
-            <Stat label="Left" value={String(sim.state.remaining)} hint="Ticks until the market closes." />
-            <Stat label="Position" value={String(sim.state.position)} hint="Contracts you hold." />
-            <Stat
-              label="Cash"
-              value={formatCents(sim.state.cash as Cents)}
-              hint="What you have left to spend."
-            />
-          </div>
-
-          <div className="flex gap-2 mt-3 items-center">
-            {sim.running ? (
-              <Button onClick={sim.pause}>Pause</Button>
-            ) : (
-              <Button onClick={sim.start}>{sim.state.tick === 0 ? "Start market" : "Resume"}</Button>
-            )}
-            <span className="font-mono text-[11px] text-muted">
-              {sim.running ? "● live" : sim.state.remaining === 0 ? "closed" : "paused"}
-            </span>
-          </div>
-
-          <OrderTicket estimate={sim.estimate} onSubmit={sim.trade} />
-          <Tape trades={sim.state.trades} />
+          <MarketPanel
+            key={runId}
+            scenario={step.scenario}
+            onRestart={() => setRunId((n) => n + 1)}
+          />
         </aside>
       </div>
     </main>

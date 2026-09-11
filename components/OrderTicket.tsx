@@ -9,16 +9,18 @@ import { Button } from "./Terminal";
 export interface OrderTicketProps {
   estimate: (side: Side, qty: number) => FillEstimate;
   onSubmit: (side: Side, qty: number) => void;
-  disabled?: boolean;
+  /** Why this order cannot be sent, shown in place of a silent no-op. */
+  blockedReason?: (side: Side, qty: number) => string | undefined;
 }
 
 const SIZES = [5, 10, 25, 50];
 
 /** Shows what a trade will actually cost before you commit to it. */
-export function OrderTicket({ estimate, onSubmit, disabled }: OrderTicketProps) {
+export function OrderTicket({ estimate, onSubmit, blockedReason }: OrderTicketProps) {
   const [side, setSide] = useState<Side>("buy");
   const [qty, setQty] = useState(10);
   const preview = estimate(side, qty);
+  const blocked = blockedReason?.(side, qty);
 
   return (
     <div className="border border-rule rounded-md bg-surface mt-3">
@@ -102,7 +104,14 @@ export function OrderTicket({ estimate, onSubmit, disabled }: OrderTicketProps) 
           )}
         </dl>
 
-        <Button onClick={() => onSubmit(side, qty)} disabled={disabled || preview.filledQty === 0}>
+        {blocked && (
+          <p role="status" className="text-xs text-ask flex gap-1.5 leading-snug">
+            <span aria-hidden>!</span>
+            {blocked}
+          </p>
+        )}
+
+        <Button onClick={() => onSubmit(side, qty)} disabled={blocked !== undefined}>
           {side === "buy" ? "Buy" : "Sell"} {qty} at market
         </Button>
       </div>

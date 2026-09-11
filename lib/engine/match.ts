@@ -23,7 +23,16 @@ export type RejectReason =
 export type MatchEvent =
   | { kind: "accepted"; id: string }
   | { kind: "rejected"; id: string; reason: RejectReason }
-  | { kind: "fill"; takerId: string; makerId: string; price: Ticks; qty: number; takerSide: Side }
+  | {
+      kind: "fill";
+      takerId: string;
+      makerId: string;
+      takerOwner: string;
+      makerOwner: string;
+      price: Ticks;
+      qty: number;
+      takerSide: Side;
+    }
   | { kind: "resting"; id: string; price: Ticks; qty: number }
   | { kind: "cancelled"; id: string };
 
@@ -42,6 +51,7 @@ function crosses(takerSide: Side, takerPrice: Ticks, makerPrice: Ticks): boolean
 
 export class Matcher {
   private seq = 0;
+  private journal: MatchEvent[] = [];
 
   constructor(
     readonly book: OrderBook,
@@ -50,12 +60,11 @@ export class Matcher {
 
   submit(req: OrderRequest): MatchResult {
     const events: MatchEvent[] = [];
-    const reject = (reason: RejectReason): MatchResult => ({
-      events: [{ kind: "rejected", id: req.id, reason }],
-      filledQty: 0,
-      notional: 0 as Cents,
-      restingQty: 0,
-    });
+    const reject = (reason: RejectReason): MatchResult => {
+      const rejection: MatchEvent = { kind: "rejected", id: req.id, reason };
+      this.journal.push(rejection);
+      return { events: [rejection], filledQty: 0, notional: 0 as Cents, restingQty: 0 };
+    };
 
     if (!Number.isInteger(req.qty) || req.qty <= 0) return reject("qty-not-positive-integer");
     if (this.book.get(req.id)) return reject("duplicate-id");
@@ -85,6 +94,8 @@ export class Matcher {
         kind: "fill",
         takerId: req.id,
         makerId: maker.id,
+        takerOwner: req.owner,
+        makerOwner: maker.owner,
         price: maker.price,
         qty,
         takerSide: req.side,
@@ -109,6 +120,7 @@ export class Matcher {
       }
     }
 
+    this.journal.push(...events);
     return {
       events,
       filledQty: req.qty - remaining,
@@ -119,7 +131,16 @@ export class Matcher {
 
   cancel(id: string): MatchEvent {
     const gone = this.book.cancel(id);
-    return gone ? { kind: "cancelled", id } : { kind: "rejected", id, reason: "no-liquidity" };
+    const event: MatchEvent = gone
+      ? { kind: "cancelled", id }
+      : { kind: "rejected", id, reason: "no-liquidity" };
+    this.journal.push(event);
+    return event;
+  }
+
+  /** Everything that happened since the last call. The sim loop drains this each tick. */
+  takeEvents(): MatchEvent[] {
+    return this.journal.splice(0);
   }
 
   /** Seeds the book without going through matching, for scenario setup. */

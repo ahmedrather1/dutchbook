@@ -13,10 +13,11 @@ export interface DrillSetProps {
   /** Changing this regenerates every template drill, so a retry is genuinely fresh (D10). */
   seed: number;
   onFinished: (scored: Scored, results: DrillResult[]) => void;
-  onRetry?: () => void;
+  /** Rendered under the result, e.g. remediation after a failure. */
+  afterResult?: (scored: Scored, results: DrillResult[]) => React.ReactNode;
 }
 
-export function DrillSet({ chapter, drills, seed, onFinished, onRetry }: DrillSetProps) {
+export function DrillSet({ chapter, drills, seed, onFinished, afterResult }: DrillSetProps) {
   const instances = useMemo(
     () => drills.map((d, i) => instantiate(d, makeRng(seed * 1000 + i))),
     [drills, seed],
@@ -65,11 +66,7 @@ export function DrillSet({ chapter, drills, seed, onFinished, onRetry }: DrillSe
           </>
         )}
 
-        {!scored.passed && onRetry && (
-          <div className="mt-5">
-            <Button onClick={onRetry}>Try again with new questions</Button>
-          </div>
-        )}
+        {afterResult?.(scored, results)}
       </div>
     );
   }

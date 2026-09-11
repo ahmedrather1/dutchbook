@@ -1,51 +1,48 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   LocalProgressStore, MemoryProgressStore, emptyProgress,
   type Progress, type ProgressStore,
 } from "@/lib/progress/store";
 
 let store: ProgressStore | null = null;
-let cached: Progress | null = null;
-const listeners = new Set<() => void>();
+const listeners = new Set<(p: Progress) => void>();
 
 function getStore(): ProgressStore {
-  if (store) return store;
-  store =
+  store ??=
     typeof window === "undefined"
       ? new MemoryProgressStore()
       : new LocalProgressStore(window.localStorage);
   return store;
 }
 
-function getSnapshot(): Progress {
-  cached ??= getStore().load();
-  return cached;
-}
-
-const SERVER_SNAPSHOT = emptyProgress();
-
+/**
+ * Progress is read after mount, not during render: the server has no localStorage, so
+ * rendering it directly would mismatch on hydration.
+ */
 export function useProgress() {
-  const progress = useSyncExternalStore(
-    (onChange) => {
-      listeners.add(onChange);
-      return () => listeners.delete(onChange);
-    },
-    getSnapshot,
-    () => SERVER_SNAPSHOT,
-  );
+  const [progress, setProgress] = useState<Progress>(emptyProgress);
+
+  useEffect(() => {
+    // Reading storage after mount is the point: the server cannot, so doing it during
+    // render would mismatch on hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setProgress(getStore().load());
+    listeners.add(setProgress);
+    return () => {
+      listeners.delete(setProgress);
+    };
+  }, []);
 
   const update = useCallback((next: Progress) => {
-    cached = next;
     getStore().save(next);
-    listeners.forEach((fn) => fn());
+    listeners.forEach((notify) => notify(next));
   }, []);
 
   const reset = useCallback(() => {
-    cached = emptyProgress();
     getStore().clear();
-    listeners.forEach((fn) => fn());
+    listeners.forEach((notify) => notify(emptyProgress()));
   }, []);
 
   return { progress, update, reset };

@@ -1,6 +1,27 @@
 import { test, expect } from "@playwright/test";
 import { PRODUCT_NAME } from "../../lib/brand";
 
+test("chapter 2 is locked until chapter 1 is passed", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("Pass chapter 1: Markets & price-as-probability")).toBeVisible();
+
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "dutchbook.progress.v1",
+      JSON.stringify({
+        version: 1,
+        chapters: {
+          "markets-and-probability": { bestScore: 1, passed: true, attempts: [], mastery: {} },
+        },
+      }),
+    ),
+  );
+  await page.reload();
+
+  await page.getByRole("link", { name: /Orders & fills/ }).click();
+  await expect(page.getByRole("heading", { name: "Orders & fills", level: 1 })).toBeVisible();
+});
+
 test("landing lists the twelve chapters", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: PRODUCT_NAME })).toBeVisible();

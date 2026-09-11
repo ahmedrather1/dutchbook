@@ -6,6 +6,9 @@ import { MarketPanel } from "@/components/MarketPanel";
 import { ChapterEnd } from "@/components/ChapterEnd";
 import { Button } from "@/components/Terminal";
 import { DrillSet } from "@/components/DrillSet";
+import { Remediation } from "@/components/Remediation";
+import { LessonPoints } from "@/components/LessonPoints";
+import { selectRemediation } from "@/lib/learning/remediate";
 import { useProgress } from "@/components/useProgress";
 import { getChapter } from "@/lib/content/registry";
 import { chapterProgress } from "@/lib/progress/store";
@@ -23,7 +26,14 @@ export function ChapterView({ slug }: { slug: string }) {
   const isLast = lessonIndex === chapter.lessons.length - 1;
   const record = chapterProgress(progress, chapter.slug);
 
-  const finishDrills = (scored: Scored) => update(recordAttempt(progress, chapter, scored));
+  const [seenDrills, setSeenDrills] = useState<string[]>([]);
+
+  const finishDrills = (scored: Scored, results: { drillId: string }[]) => {
+    update(recordAttempt(progress, chapter, scored));
+    setSeenDrills((prev) => [...prev, ...results.map((r) => r.drillId)]);
+  };
+
+  const retry = () => setAttemptSeed((s) => s + 1);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -60,16 +70,9 @@ export function ChapterView({ slug }: { slug: string }) {
             </span>
           </div>
 
-          <ul className="mt-4 space-y-1.5 border border-rule rounded-md bg-surface p-4">
-            {lesson.points.map((point, i) => (
-              <li key={i} className="flex gap-2.5 text-[15px] leading-relaxed">
-                <span className="text-accent select-none" aria-hidden>
-                  ·
-                </span>
-                <span dangerouslySetInnerHTML={{ __html: bold(point) }} />
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4 border border-rule rounded-md bg-surface p-4">
+            <LessonPoints points={lesson.points} />
+          </div>
 
           <details className="mt-3 group">
             <summary className="cursor-pointer font-mono text-xs text-muted hover:text-accent list-none focus-visible:outline-2 focus-visible:outline-accent">
@@ -144,7 +147,15 @@ export function ChapterView({ slug }: { slug: string }) {
                 drills={chapter.test.drills}
                 seed={attemptSeed}
                 onFinished={finishDrills}
-                onRetry={() => setAttemptSeed((s) => s + 1)}
+                afterResult={(scored) =>
+                  scored.passed ? null : (
+                    <Remediation
+                      chapter={chapter}
+                      plan={selectRemediation(chapter, scored.missed, seenDrills)}
+                      onRetry={retry}
+                    />
+                  )
+                }
               />
             </div>
           )}
@@ -162,12 +173,4 @@ export function ChapterView({ slug }: { slug: string }) {
       </div>
     </main>
   );
-}
-
-/** Lesson points use **bold** for the term being defined. */
-function bold(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }

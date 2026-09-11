@@ -1,5 +1,5 @@
 import type { Rng } from "@/lib/engine/rng";
-import { formatPrice, ONE_DOLLAR, ticks } from "@/lib/engine/money";
+import { cents, formatCents, formatPrice, ONE_DOLLAR, ticks } from "@/lib/engine/money";
 import type { BookReadDrill, DrillTemplate, NumericDrill } from "./schema";
 
 /** A plausible two-sided book: a mid, a spread, and a few levels either side. */
@@ -85,6 +85,53 @@ export function priceToProbability(id: string, objectives: string[]): DrillTempl
         unit: "%",
         explanation: `${formatPrice(ticks(price))} out of $1.00 is ${percent}%. The price and the probability are the same number — one just has a dollar sign in front of it.`,
       } satisfies NumericDrill;
+    },
+  };
+}
+
+/**
+ * "You buy N contracts at market. What average price do you get?" The answer is computed
+ * by walking the generated book, so it cannot drift from the book shown.
+ */
+export function walkTheBook(id: string, objectives: string[]): DrillTemplate {
+  return {
+    id,
+    objectives,
+    generate: (rng) => {
+      const book = randomBook(rng, 3);
+      const asks = book
+        .filter((l) => l.side === "sell")
+        .sort((a, b) => a.price - b.price);
+
+      // Size chosen to clear the first level and bite into the second.
+      const qty = asks[0]!.qty + rng.int(1, asks[1]!.qty);
+      let remaining = qty;
+      let paid = 0;
+      const steps: string[] = [];
+      for (const level of asks) {
+        if (remaining === 0) break;
+        const take = Math.min(remaining, level.qty);
+        remaining -= take;
+        paid += take * level.price;
+        steps.push(`${take} at ${formatPrice(ticks(level.price))}`);
+      }
+      const average = Math.round(paid / (qty - remaining));
+
+      return {
+        kind: "book-read",
+        id: `${id}-${rng.int(0, 1e9)}`,
+        objectives,
+        book,
+        ask: "cost-to-buy",
+        qty,
+        answer: average,
+        prompt: `You buy ${qty} contracts at market. What average price do you pay?`,
+        explanation: `Your order walks the book: ${steps.join(", then ")}. That is ${formatCents(
+          cents(paid),
+        )} for ${qty - remaining} contracts, so the average is ${formatPrice(
+          ticks(average),
+        )} — worse than the ${formatPrice(ticks(asks[0]!.price))} you saw on screen.`,
+      } satisfies BookReadDrill;
     },
   };
 }

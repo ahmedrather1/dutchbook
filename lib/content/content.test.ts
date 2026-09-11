@@ -156,7 +156,12 @@ describe("jargon discipline (D2)", () => {
     for (const c of CHAPTERS) {
       for (const lesson of c.lessons) {
         const text = lesson.body.join(" ").toLowerCase();
-        for (const term of ["bid", "ask", "spread", "depth", "order book", "binary contract"]) {
+        const GLOSSARY = [
+          "order book", "binary contract", "market order", "limit order",
+          "resting order", "queue priority", "slippage", "walking the book",
+          "bid", "ask", "spread", "depth", "maker", "taker",
+        ];
+        for (const term of GLOSSARY) {
           if (!text.includes(term)) continue;
           const definesHere = lesson.defines?.includes(term) ?? false;
           expect(

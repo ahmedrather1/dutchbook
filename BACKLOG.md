@@ -55,7 +55,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 | **M1** | Playable chapter | rest of B, C-1…C-2, D, E-3…E-8, F-1…F-4, G-1 | Chapter 1 is fully playable end-to-end with grading and saved progress. |
 | **M2** | Foundations | C-3…C-7, F-5…F-7, G-2…G-5, K | Chapters 1–5 complete. The game teaches everything an arb chapter will assume. |
 | **M3** | The arb core | H-1…H-4, I-1, I-2 | Chapters 6–11 complete. **This is the point at which the owner's original goal is met.** |
-| **M4** | Capstone | J | Chapter 12: sandbox + Socratic coach. |
+| **M4** | Capstone ✅ **REACHED** | J | Chapter 12: sandbox + Socratic coach. |
 | **M5** | Publish | L, N | Landing page, study guide, launch. |
 | **M6** | Live | M | Phase 2: live feeds and live paper trading. |
 
@@ -334,7 +334,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic E — UI and design system
+# Epic E — UI and design system  ✅ DONE (2026-09-12)
 
 ### E-1 — Terminal design system
 **Blocked by:** A-1
@@ -382,7 +382,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic F — Learning loop
+# Epic F — Learning loop  ✅ DONE (2026-09-12)
 
 ### F-1 — ProgressStore interface + localStorage implementation
 **Blocked by:** A-2
@@ -514,7 +514,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic J — Chapter 12 capstone: strategy sandbox and Socratic coach
+# Epic J — Chapter 12 capstone: strategy sandbox and Socratic coach  ✅ DONE (2026-09-12)
 
 ### J-1 — Web Worker sandbox runtime
 **Blocked by:** B-9
@@ -631,7 +631,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic N — Interactive study guide (`/guide`) — D40
+# Epic N — Interactive study guide (`/guide`) — D40  ✅ DONE (2026-09-12)
 
 > A first-class deliverable: an interactive, in-app explanation of how this product is
 > built and why. Written for the owner to navigate the codebase confidently, and for any

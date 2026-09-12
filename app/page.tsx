@@ -23,7 +23,13 @@ export default function Home() {
         >
           Start chapter 1 →
         </Link>
-        <span className="font-mono text-xs text-muted">no signup · nothing to install</span>
+        <Link
+          href="/guide"
+          className="font-mono text-sm px-4 py-2.5 border border-rule rounded text-muted hover:border-accent hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+        >
+          How it works
+        </Link>
+        <span className="font-mono text-xs text-muted">no signup</span>
       </div>
 
       <ChapterMap />

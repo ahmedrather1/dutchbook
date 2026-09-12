@@ -303,7 +303,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic D — Content system  ✅ DONE (D-4 authoring guide outstanding)
+# Epic D — Content system  ✅ DONE
 
 ### D-1 — Content schema
 **Blocked by:** B-9

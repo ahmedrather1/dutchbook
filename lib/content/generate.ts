@@ -1,5 +1,6 @@
 import type { Rng } from "@/lib/engine/rng";
 import { cents, formatCents, formatPrice, ONE_DOLLAR, ticks } from "@/lib/engine/money";
+import type { Ticks } from "@/lib/engine/money";
 import type { BookReadDrill, DrillTemplate, NumericDrill } from "./schema";
 
 /** A plausible two-sided book: a mid, a spread, and a few levels either side. */
@@ -144,6 +145,74 @@ export function walkTheBook(id: string, objectives: string[]): DrillTemplate {
           ticks(average),
         )} — worse than the ${formatPrice(ticks(asks[0]!.price))} you saw on screen.`,
       } satisfies BookReadDrill;
+    },
+  };
+}
+
+/** "You hold N contracts bought at P and it resolves YES/NO. What is your P&L?" */
+export function settlementPnl(id: string, objectives: string[]): DrillTemplate {
+  return {
+    id,
+    objectives,
+    generate: (rng) => {
+      const price = rng.int(10, 90) * 10;
+      const qty = rng.int(5, 100);
+      const yes = rng.bool(0.5);
+      const side = rng.bool(0.5) ? "YES" : "NO";
+
+      // Holding NO is the complement: it pays $1 when the event does not happen.
+      const paysOut = side === "YES" ? yes : !yes;
+      const pnl = (paysOut ? ONE_DOLLAR - price : -price) * qty;
+
+      return {
+        kind: "numeric",
+        id: `${id}-${price}-${qty}-${yes}-${side}`,
+        objectives,
+        prompt: `You hold ${qty} ${side} contracts bought at ${formatPrice(
+          ticks(price),
+        )}. The market resolves ${yes ? "YES" : "NO"}. What is your profit or loss, in dollars?`,
+        answer: pnl / ONE_DOLLAR,
+        tolerance: 0.005,
+        unit: "$",
+        explanation: paysOut
+          ? `Your ${side} contracts pay $1.00 each. You paid ${formatPrice(
+              ticks(price),
+            )}, so you make ${formatPrice(ticks(ONE_DOLLAR - price))} per contract on ${qty} contracts.`
+          : `Your ${side} contracts pay nothing. You lose what you paid: ${formatPrice(
+              ticks(price),
+            )} on each of ${qty} contracts.`,
+      } satisfies NumericDrill;
+    },
+  };
+}
+
+/** "What does one venue charge for this trade?" Uses the real modelled fee. */
+export function venueFee(
+  id: string,
+  objectives: string[],
+  venue: { name: string; fee: (i: { qty: number; price: Ticks; role: "taker" }) => number },
+): DrillTemplate {
+  return {
+    id,
+    objectives,
+    generate: (rng) => {
+      const price = ticks(rng.int(10, 90) * 10);
+      const qty = rng.int(10, 200);
+      const fee = venue.fee({ qty, price, role: "taker" });
+      return {
+        kind: "numeric",
+        id: `${id}-${price}-${qty}`,
+        objectives,
+        prompt: `On ${venue.name}, you take ${qty} contracts at ${formatPrice(
+          price,
+        )}. What is the fee, in dollars?`,
+        answer: fee / ONE_DOLLAR,
+        tolerance: 0.011,
+        unit: "$",
+        explanation: `The fee follows price × (1 − price), which peaks at $0.50 and falls away at both ends. At ${formatPrice(
+          price,
+        )} on ${qty} contracts that comes to ${formatCents(cents(fee))}. The same size at $0.50 would cost noticeably more.`,
+      } satisfies NumericDrill;
     },
   };
 }

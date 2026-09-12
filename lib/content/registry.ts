@@ -1,10 +1,12 @@
 import { chapter1 } from "./ch01";
 import { chapter2 } from "./ch02";
 import { chapter3 } from "./ch03";
+import { chapter4 } from "./ch04";
+import { chapter5 } from "./ch05";
 import type { Chapter } from "./schema";
 
 /** Curriculum order is locked (D8). Adding a chapter means touching only this list. */
-export const CHAPTERS: readonly Chapter[] = [chapter1, chapter2, chapter3];
+export const CHAPTERS: readonly Chapter[] = [chapter1, chapter2, chapter3, chapter4, chapter5];
 
 /** Every chapter in D8, including the ones not yet written. Drives the chapter map. */
 export const PLANNED_TITLES: readonly string[] = [

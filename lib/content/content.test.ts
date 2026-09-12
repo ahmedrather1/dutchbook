@@ -156,11 +156,15 @@ describe("jargon discipline (D2)", () => {
     for (const c of CHAPTERS) {
       for (const lesson of c.lessons) {
         const text = lesson.body.join(" ").toLowerCase();
+        // Jargon only. Ordinary English a beginner already knows ("fee", "price",
+        // "profit") does not belong here — over-listing turns the guard into noise.
         const GLOSSARY = [
           "order book", "binary contract", "market order", "limit order",
           "resting order", "queue priority", "slippage", "walking the book",
           "bid", "ask", "spread", "depth", "maker", "taker",
           "fair value", "edge", "decimal odds", "expected value", "variance",
+          "complement", "resolution", "settlement",
+          "all-in cost", "break-even edge",
         ];
         for (const term of GLOSSARY) {
           if (!text.includes(term)) continue;

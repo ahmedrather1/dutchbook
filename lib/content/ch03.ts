@@ -50,7 +50,7 @@ export const chapter3: Chapter = {
       id: "fair-value",
       title: "What is it actually worth?",
       objectives: ["fair-value", "compute-edge"],
-      defines: ["fair value", "edge"],
+      defines: ["fair value", "edge", "arbitrage"],
       points: [
         "**Fair value** is what a contract is worth *to you*, given what you believe.",
         "Think it is 70% likely? Then it is worth 70¢ to you. That simple.",

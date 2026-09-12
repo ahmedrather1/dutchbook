@@ -164,7 +164,10 @@ describe("jargon discipline (D2)", () => {
           "bid", "ask", "spread", "depth", "maker", "taker",
           "fair value", "edge", "decimal odds", "expected value", "variance",
           "complement", "resolution", "settlement",
-          "all-in cost", "break-even edge",
+          "all-in cost", "break-even edge", "Dutch book", "arbitrage", "merge",
+          "cross-venue arbitrage", "leg risk",
+          "mutually exclusive", "negative risk", "correlation",
+          "stale quote", "latency", "adverse selection", "market making",
         ];
         for (const term of GLOSSARY) {
           if (!text.includes(term)) continue;

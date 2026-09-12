@@ -84,6 +84,19 @@ This is a learning product for a stated beginner (D2). Two rules that are easy t
   objective does not pass, and taking a merely-correlated "arb" scores as a failure even
   when it happens to make money.
 
+## Gotchas that have already cost time
+
+- **`npm run check` kills a running `npm run dev`.** The build step replaces `.next`, and
+  the dev server then serves stale or 500ing chunks. If a page looks frozen, blank, or
+  wrong, restart the dev server **before** believing what you see — three separate
+  "bugs" in this project turned out to be nothing but a stale dev server.
+- **Playwright's `getByText` matches the editor's contents.** A test that types a sentinel
+  string into the code editor will match its own input. Assert on the console output
+  instead.
+- **`.next/types` is stale during typecheck.** Adding a route makes `npm run check` fail
+  on the typed-routes validator until a build has run. `rm -rf .next && npm run build`
+  first, then re-check.
+
 ## Milestone workflow (commit/push cadence)
 
 At each **completed milestone** (a ticket whose acceptance criteria + Definition of Done

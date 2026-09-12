@@ -102,6 +102,8 @@ export interface Chapter {
   drills: (Drill | DrillTemplate)[];
   scenarios: ScenarioStep[];
   test: ChapterTest;
+  /** Chapter 12 replaces the market panel with the strategy sandbox. */
+  lab?: boolean;
 }
 
 export function isTemplate(d: Drill | DrillTemplate): d is DrillTemplate {

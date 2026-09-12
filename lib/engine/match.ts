@@ -143,8 +143,14 @@ export class Matcher {
     return this.journal.splice(0);
   }
 
-  /** Seeds the book without going through matching, for scenario setup. */
-  seed(side: Side, price: Ticks, qty: number, owner = "mm"): RestingOrder {
+  /**
+   * Seeds the book without matching, for scenario setup only.
+   *
+   * The default owner is deliberately not any agent's id: self-trade prevention would
+   * otherwise stop that agent's quotes from ever clearing the starting book, leaving it
+   * crossed after a large move.
+   */
+  seed(side: Side, price: Ticks, qty: number, owner = "book"): RestingOrder {
     const o: RestingOrder = { id: `seed-${++this.seq}`, side, price, qty, seq: this.seq, owner };
     this.book.insert(o);
     return o;

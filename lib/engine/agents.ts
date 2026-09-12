@@ -41,6 +41,7 @@ export function makeMarketMaker(cfg: MarketMakerConfig): Agent {
   const widenPerFill = cfg.widenPerFill ?? 0;
   const maxHalfSpread = cfg.maxHalfSpread ?? cfg.halfSpread * 4;
   let extra = 0;
+  let seq = 0;
   const quoted: string[] = [];
 
   return {
@@ -61,10 +62,17 @@ export function makeMarketMaker(cfg: MarketMakerConfig): Agent {
       const ask = clamp(ctx.fairValue + half, ctx.tickSize);
       if (bid >= ask) return;
 
-      quoted.push(
-        ctx.matcher.seed("buy", bid, cfg.size, cfg.id).id,
-        ctx.matcher.seed("sell", ask, cfg.size, cfg.id).id,
-      );
+      // Submitted, not seeded: a requote after a large move must trade against the
+      // stale orders it crosses, exactly as it would on a real venue. Seeding would
+      // insert straight into the book and leave it crossed.
+      for (const [side, price] of [
+        ["buy", bid],
+        ["sell", ask],
+      ] as const) {
+        const id = `${cfg.id}-q${++seq}`;
+        ctx.matcher.submit({ id, side, type: "limit", price, qty: cfg.size, owner: cfg.id });
+        if (ctx.matcher.book.get(id)) quoted.push(id);
+      }
     },
   };
 }
@@ -124,6 +132,50 @@ export function makeInformedTrader(cfg: InformedConfig): Agent {
         side,
         type: "market",
         qty: ctx.rng.int(cfg.minSize, cfg.maxSize),
+        owner: cfg.id,
+      });
+    },
+  };
+}
+
+export interface ClumsyConfig {
+  id: string;
+  /** Post a mispriced order every N ticks. */
+  everyTicks: number;
+  size: number;
+  /** How far inside fair value the order is priced, in ticks. */
+  giveaway: number;
+  /** Which side is given away. "both" alternates. */
+  side?: "buy" | "sell" | "both";
+}
+
+/**
+ * A participant who leaves orders priced worse than fair value — retail flow, a stale
+ * algorithm, someone who needs out. This is the edge a scanner is supposed to find, and
+ * without someone like it a market with a competent maker offers a taker nothing.
+ */
+export function makeClumsyTrader(cfg: ClumsyConfig): Agent {
+  let seq = 0;
+  return {
+    id: cfg.id,
+    act(ctx) {
+      if (ctx.tick % cfg.everyTicks !== 0) return;
+
+      const mode = cfg.side ?? "both";
+      const sells = mode === "sell" || (mode === "both" && seq % 2 === 0);
+      const side: Side = sells ? "sell" : "buy";
+      // A cheap offer sits below fair value; a generous bid sits above it.
+      const price = clamp(
+        sells ? ctx.fairValue - cfg.giveaway : ctx.fairValue + cfg.giveaway,
+        ctx.tickSize,
+      );
+
+      ctx.matcher.submit({
+        id: `${cfg.id}-${++seq}`,
+        side,
+        type: "limit",
+        price,
+        qty: cfg.size,
         owner: cfg.id,
       });
     },

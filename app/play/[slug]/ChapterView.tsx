@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MarketPanel } from "@/components/MarketPanel";
+import { StrategyLab } from "@/components/StrategyLab";
 import { ChapterEnd } from "@/components/ChapterEnd";
 import { Button } from "@/components/Terminal";
 import { DrillSet } from "@/components/DrillSet";
@@ -21,7 +22,7 @@ export function ChapterView({ slug }: { slug: string }) {
   const [phase, setPhase] = useState<"lessons" | "practice" | "test">("lessons");
   const { progress, update } = useProgress();
   const chapter = getChapter(slug)!;
-  const step = chapter.scenarios[0]!;
+  const step = chapter.scenarios[0];
   const lesson = chapter.lessons[lessonIndex]!;
   const isLast = lessonIndex === chapter.lessons.length - 1;
   const record = chapterProgress(progress, chapter.slug);
@@ -59,7 +60,13 @@ export function ChapterView({ slug }: { slug: string }) {
         )}
       </header>
 
-      <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-8 items-start">
+      <div
+        className={
+          chapter.lab
+            ? "mt-8"
+            : "grid lg:grid-cols-[1fr_360px] gap-8 mt-8 items-start"
+        }
+      >
         <section>
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent">
@@ -95,6 +102,7 @@ export function ChapterView({ slug }: { slug: string }) {
             </Button>
           </div>
 
+          {step && (
           <div className="mt-10 border border-rule rounded-md overflow-hidden">
             <div className="px-4 py-2 text-[10px] uppercase tracking-wider text-muted bg-raised border-b border-rule">
               Your task
@@ -116,6 +124,7 @@ export function ChapterView({ slug }: { slug: string }) {
               </ul>
             </div>
           </div>
+          )}
 
           {isLast && phase === "lessons" && (
             <div className="mt-10 border border-accent/40 rounded-md overflow-hidden">
@@ -190,16 +199,20 @@ export function ChapterView({ slug }: { slug: string }) {
             </div>
           )}
 
+          {chapter.lab && phase === "lessons" && isLast && <StrategyLab />}
+
           {record.passed && phase === "test" && <ChapterEnd number={chapter.number} />}
         </section>
 
-        <aside>
-          <MarketPanel
-            key={runId}
-            scenario={step.scenario}
-            onRestart={() => setRunId((n) => n + 1)}
-          />
-        </aside>
+        {step && (
+          <aside>
+            <MarketPanel
+              key={runId}
+              scenario={step.scenario}
+              onRestart={() => setRunId((n) => n + 1)}
+            />
+          </aside>
+        )}
       </div>
     </main>
   );

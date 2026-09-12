@@ -160,6 +160,7 @@ describe("jargon discipline (D2)", () => {
           "order book", "binary contract", "market order", "limit order",
           "resting order", "queue priority", "slippage", "walking the book",
           "bid", "ask", "spread", "depth", "maker", "taker",
+          "fair value", "edge", "decimal odds", "expected value", "variance",
         ];
         for (const term of GLOSSARY) {
           if (!text.includes(term)) continue;

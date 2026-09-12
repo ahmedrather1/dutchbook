@@ -18,7 +18,7 @@ export function ChapterView({ slug }: { slug: string }) {
   const [lessonIndex, setLessonIndex] = useState(0);
   const [runId, setRunId] = useState(0);
   const [attemptSeed, setAttemptSeed] = useState(1);
-  const [phase, setPhase] = useState<"lessons" | "drills">("lessons");
+  const [phase, setPhase] = useState<"lessons" | "practice" | "test">("lessons");
   const { progress, update } = useProgress();
   const chapter = getChapter(slug)!;
   const step = chapter.scenarios[0]!;
@@ -124,19 +124,49 @@ export function ChapterView({ slug }: { slug: string }) {
               </div>
               <div className="p-4">
                 <p className="text-[15px]">
-                  That is every lesson. The test is {chapter.test.drills.length} questions, and you
-                  need {Math.round(chapter.test.passThreshold * 100)}% to pass.
+                  That is every lesson. Practice is unscored and you can repeat it as often as you
+                  like. The test is {chapter.test.drills.length} questions and needs{" "}
+                  {Math.round(chapter.test.passThreshold * 100)}% to pass.
                 </p>
-                <div className="mt-4">
-                  <Button onClick={() => setPhase("drills")}>
-                    {record.passed ? "Take it again" : "Take the chapter test"}
+                <div className="mt-4 flex gap-2">
+                  <Button onClick={() => setPhase("practice")}>Practise first</Button>
+                  <Button onClick={() => setPhase("test")}>
+                    {record.passed ? "Take the test again" : "Take the chapter test"}
                   </Button>
                 </div>
               </div>
             </div>
           )}
 
-          {phase === "drills" && (
+          {phase === "practice" && (
+            <div className="mt-10">
+              <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent mb-1">
+                Practice · not scored
+              </h2>
+              <p className="text-sm text-muted mb-3">
+                Get it wrong as often as you like here. Nothing is recorded.
+              </p>
+              <DrillSet
+                key={`practice-${attemptSeed}`}
+                chapter={chapter}
+                drills={chapter.drills}
+                seed={attemptSeed + 500}
+                onFinished={(_, results) =>
+                  setSeenDrills((prev) => [...prev, ...results.map((r) => r.drillId)])
+                }
+                afterResult={() => (
+                  <div className="mt-5 flex gap-2">
+                    <Button onClick={retry}>Practise again</Button>
+                    <Button onClick={() => { setPhase("test"); retry(); }}>
+                      Take the chapter test
+                    </Button>
+                  </div>
+                )}
+              />
+            </div>
+          )}
+
+          {phase === "test" && (
             <div className="mt-10">
               <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-accent mb-3">
                 Chapter {chapter.number} test
@@ -160,7 +190,7 @@ export function ChapterView({ slug }: { slug: string }) {
             </div>
           )}
 
-          {record.passed && phase === "drills" && <ChapterEnd number={chapter.number} />}
+          {record.passed && phase === "test" && <ChapterEnd number={chapter.number} />}
         </section>
 
         <aside>

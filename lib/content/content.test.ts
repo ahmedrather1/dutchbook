@@ -168,6 +168,8 @@ describe("jargon discipline (D2)", () => {
           "cross-venue arbitrage", "leg risk",
           "mutually exclusive", "negative risk", "correlation",
           "stale quote", "latency", "adverse selection", "market making",
+          "Kelly", "bankroll", "drawdown", "capital lockup", "correlated risk",
+          "partial fill", "rate limit", "execution policy",
         ];
         for (const term of GLOSSARY) {
           if (!text.includes(term)) continue;

@@ -217,6 +217,40 @@ export function venueFee(
   };
 }
 
+/** "You believe X%, the price is Y. What fraction of your bankroll does Kelly suggest?" */
+export function kellySizing(id: string, objectives: string[]): DrillTemplate {
+  return {
+    id,
+    objectives,
+    generate: (rng) => {
+      const priceCents = rng.int(20, 70);
+      const beliefCents = Math.min(95, priceCents + rng.int(5, 25));
+      const price = priceCents / 100;
+      const belief = beliefCents / 100;
+      const fraction = (belief - price) / (1 - price);
+
+      return {
+        kind: "numeric",
+        id: `${id}-${priceCents}-${beliefCents}`,
+        objectives,
+        prompt: `The price is ${formatPrice(
+          ticks(priceCents * 10),
+        )} and you believe the true probability is ${beliefCents}%. What percentage of your bankroll does full Kelly suggest?`,
+        answer: Math.round(fraction * 1000) / 10,
+        tolerance: 0.6,
+        unit: "%",
+        explanation: `Kelly is edge ÷ odds received. Your edge is ${beliefCents}% − ${priceCents}% = ${
+          beliefCents - priceCents
+        } points, and you risk ${priceCents}¢ to win ${100 - priceCents}¢. So (${
+          (belief - price).toFixed(2)
+        }) ÷ (${(1 - price).toFixed(2)}) = ${(fraction * 100).toFixed(
+          1,
+        )}%. Most practitioners bet a quarter of that, because the edge is an estimate and being wrong about it is likelier than the arithmetic being wrong.`,
+      } satisfies NumericDrill;
+    },
+  };
+}
+
 /** Price to decimal odds, the form most of the world outside the US quotes. */
 export function decimalOdds(id: string, objectives: string[]): DrillTemplate {
   return {

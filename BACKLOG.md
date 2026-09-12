@@ -414,7 +414,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic G — Chapters 1–5 (foundations)
+# Epic G — Chapters 1–5 (foundations)  ✅ DONE (2026-09-12)
 
 > Each chapter ticket delivers: objectives, lesson segments, drill set, ≥1 scenario, a
 > chapter test, and a pass threshold — all passing D-5 content lint. "Playable" means an
@@ -459,7 +459,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic H — Chapters 6–9 (the four arbitrage families)
+# Epic H — Chapters 6–9 (the four arbitrage families)  ✅ DONE (2026-09-12)
 
 > **This epic is the reason the product exists (D0/§0).** Each chapter must end with the
 > player able to state the strategy precisely enough to implement it — that phrasing is
@@ -495,7 +495,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic I — Chapters 10–11 (risk and execution)
+# Epic I — Chapters 10–11 (risk and execution)  ✅ DONE (2026-09-12)
 
 ### I-1 — Chapter 10: Risk & sizing
 **Blocked by:** H-4

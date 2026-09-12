@@ -13,12 +13,31 @@ import type { Action, StrategyContext } from "./api";
 export const TICK_BUDGET_MS = 250;
 export const COMPILE_BUDGET_MS = 2000;
 
+/**
+ * Assigning `self.fetch = undefined` does NOT work: these are non-writable accessors on
+ * WorkerGlobalScope, so the assignment fails silently and the player's code can still
+ * reach the network. They are deleted where possible and, more importantly, shadowed as
+ * parameters of the function the code is compiled into — a binding the code cannot escape.
+ */
+const BLOCKED = [
+  "fetch",
+  "XMLHttpRequest",
+  "WebSocket",
+  "EventSource",
+  "importScripts",
+  "Worker",
+  "SharedWorker",
+  "indexedDB",
+  "caches",
+  "self",
+  "globalThis",
+];
+
 const WORKER_SOURCE = `
-self.fetch = undefined;
-self.XMLHttpRequest = undefined;
-self.WebSocket = undefined;
-self.importScripts = undefined;
-self.EventSource = undefined;
+const BLOCKED = ${JSON.stringify(BLOCKED)};
+for (const name of BLOCKED) {
+  try { delete self[name]; } catch (e) { /* non-configurable; shadowing covers it */ }
+}
 
 let strategy = null;
 
@@ -27,9 +46,13 @@ self.onmessage = (event) => {
 
   if (msg.kind === "compile") {
     try {
-      // Indirect construction keeps the player's code out of this scope.
-      const factory = new Function(msg.code + "\\nreturn typeof onTick === 'function' ? onTick : null;");
-      strategy = factory();
+      // The blocked names become parameters, so the player's code sees them as undefined
+      // no matter what the global scope still holds.
+      const factory = new Function(
+        ...BLOCKED,
+        msg.code + "\\nreturn typeof onTick === 'function' ? onTick : null;"
+      );
+      strategy = factory(...BLOCKED.map(() => undefined));
       if (typeof strategy !== "function") {
         self.postMessage({ kind: "compiled", ok: false, error: "No function named onTick was defined." });
         return;

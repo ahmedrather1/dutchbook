@@ -150,7 +150,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic A — Foundation & tooling
+# Epic A — Foundation & tooling  ✅ DONE
 
 ### A-1 — Next.js 15 scaffold with strict TypeScript and Tailwind
 **Blocked by:** —
@@ -206,7 +206,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic B — Simulation engine
+# Epic B — Simulation engine  ✅ DONE
 
 > All of Epic B is pure TypeScript under `lib/engine` — no React, DOM, or network (D19).
 
@@ -264,7 +264,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic C — Venue models
+# Epic C — Venue models  ✅ DONE (2026-09-12)
 
 ### C-1 — Venue parameter research and verification
 **Blocked by:** — (research only; start anytime)
@@ -303,7 +303,7 @@ A ticket is not complete until, in addition to its own acceptance criteria:
 
 ---
 
-# Epic D — Content system
+# Epic D — Content system  ✅ DONE (D-4 authoring guide outstanding)
 
 ### D-1 — Content schema
 **Blocked by:** B-9
